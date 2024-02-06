@@ -29,15 +29,22 @@ def main():
     # Транскрибируем каждый аудиофайл из списка
     for file in file_list:
         # Транскрибируем аудиофайл
-        logger_settings.logger.info(f"Транскрибирование аудиофайла {file} ...")
-        trans_eng_text = neural_process.final_process(file)
+        logger_settings.logger.info(f"Транскрибирование аудиофайла\n {file} ...")
+        trans_text_helsinki, trans_text_whisper = neural_process.final_process(file)
 
-        # сохраняем результат в текстовый файл
+        # сохраняем результаты в текстовые файлы
         file_to_save = Path(
             variables.DIR_SOUND_OUT,
-            f"{Path(file).stem}_(model:{variables.MODEL}).txt",
+            f"{Path(file).stem}_(model:{variables.MODEL}, NLP:helsinki).txt",
         )
-        file_process.save_text_to_file("trans_eng_text", file_to_save)
+        file_process.save_text_to_file(trans_text_helsinki, file_to_save)
+
+        file_to_save = Path(
+            variables.DIR_SOUND_OUT,
+            f"{Path(file).stem}_(model:{variables.MODEL}, NLP:whisper).txt",
+        )
+        file_process.save_text_to_file(trans_text_whisper, file_to_save)
+
 
     logger_settings.logger.info("Все аудиофайлы обработаны.")
 

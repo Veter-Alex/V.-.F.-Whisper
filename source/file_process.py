@@ -49,7 +49,9 @@ def get_audio_file(path_in: Path = variables.DIR_SOUND_IN) -> list[str]:
     return file_list
 
 
-def save_text_to_file(trans_eng_text: str, path_out: Path = variables.DIR_SOUND_OUT):
+def save_text_to_file(
+    trans_eng_text: str, path_out: Path = variables.DIR_SOUND_OUT
+):
     # Сохраняем вывод в текстовый файл
     with open(path_out, "w", encoding="utf-8") as output_file:
         output_file.write(trans_eng_text)
@@ -58,7 +60,8 @@ def save_text_to_file(trans_eng_text: str, path_out: Path = variables.DIR_SOUND_
 def file_duration_check(file: str) -> float:
     """
     Проверяет длительность данного файла и возвращает длительность в секундах.
-    Если файл не может быть обработан, возвращает предел длительности, определенный в модуле переменных.
+    Если файл не может быть обработан, возвращает предел длительности,
+        определенный в модуле переменных.
 
     Args:
         file (str): Путь к проверяемому файлу.

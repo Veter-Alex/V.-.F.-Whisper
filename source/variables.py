@@ -16,7 +16,7 @@ os.system("clear")
 draw.draw_picture(f"{Path(__file__).parent.parent}/images/logo.jpg")
 print("\n" * 2)
 logger_settings.logger.info("НАЧАЛО РАБОТЫ.".center(70))
-logger_settings.logger.info("ПАРАМЕТРЫ (настройки файла '.env' ):".center(70))
+logger_settings.logger.info("Настройки из файла '.env' ):".center(70))
 dotenv_path = f"{Path((__file__)).parent.parent}/.env"
 if Path(dotenv_path).is_file():
     load_dotenv(dotenv_path)
@@ -72,7 +72,7 @@ if getenv("DURATION_LIMIT") is None:
         "Error: DURATION_LIMIT is None"
     )
 else:
-    DURATION_LIMIT = float(getenv("DURATION_LIMIT"))
+    DURATION_LIMIT = float(getenv("DURATION_LIMIT", "600"))
     """ Максимальная длительность звукового файла в секундах """
     logger_settings.logger.info(
         f"Максимальная длительность звукового файла в секундах: "
@@ -93,22 +93,3 @@ else:
     MODEL = getenv("MODEL")
     """ Модель whisper """
     logger_settings.logger.info(f"Модель whisper: {MODEL}")
-
-# # Паттерны REGEX
-# REGEX_NOTAM_NUMBER = re.compile(
-#     r"(?P<notam_number>^[A-Za-z][0-9]{4}/[0-9]{2}|^FDC [0-9]/[0-9]{4}|^[0-9]{2}/[0-9]{3})"
-# )
-# """ Паттерн номера резервирования вида B2463/09, FDC 8/9461, 07/437
-#     r"(?P<notam_number>
-#     ^[A-Za-z][0-9]{4}/[0-9]{2}|
-#     ^FDC [0-9]/[0-9]{4}|
-#     ^[0-9]{2}/[0-9]{3})"
-# """
-
-# REGEX_NULL_STR = re.compile(r"^\s*$")
-# """ Паттерн пустой строки """
-
-# REGEX_ARTCC_ONLY = re.compile(
-#     r"^\s*(?P<artcc_only>[A-Za-z]{4})\s*$|.*BACK TO TOP.*|.*Back to Top.*"
-# )
-# """ Паттерн строки вида 'MGTH' """
