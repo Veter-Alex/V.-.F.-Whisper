@@ -2,7 +2,7 @@
 name = "v-f-whisper"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["VeterAN <ver-an@yandex.ru>"]
 readme = "README.md"
 packages = [{include = "v"}]
 
@@ -14,10 +14,12 @@ loguru = "^0.7.2"
 transformers = "^4.37.2"
 pydub = "^0.25.1"
 pillow = "^10.2.0"
-ffmpeg = "^1.4"
 ffmpeg-python = "^0.2.0"
-
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 79
+target-version = ['py310']
