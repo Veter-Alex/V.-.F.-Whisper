@@ -50,6 +50,8 @@ else:
         f"Входная директория со звуковыми файлами: {DIR_SOUND_IN}"
     )
 
+# TODO реализовать проверки через регулярные выражения
+EXTENSIONS = getenv("EXTENSIONS", "*.*").split(", ")
 
 if getenv("DIR_SOUND_OUT") is None:
     exit(
@@ -75,8 +77,7 @@ else:
     DURATION_LIMIT = float(getenv("DURATION_LIMIT", "600"))
     """ Максимальная длительность звукового файла в секундах """
     logger_settings.logger.info(
-        f"Максимальная длительность звукового файла в секундах: "
-        f"{DURATION_LIMIT}"
+        f"Максимальная длительность звукового файла в секундах: " f"{DURATION_LIMIT}"
     )
 
 if getenv("MODEL") not in [

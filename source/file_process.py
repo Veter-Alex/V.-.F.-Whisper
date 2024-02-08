@@ -1,16 +1,27 @@
+"""Модуль содержит функции файловых операций.
+
+Def:
+    delete_file(file_path) -> None : Удаляет файл по указанному file_path.
+
+
+Returns:
+    _type_: _description_
+    """
+
 from pathlib import Path
 
 import logger_settings
 import variables
 from pydub import AudioSegment
+from typing import Optional, Union
 
 
-def delete_file(file_path):
+def delete_file(file_path: Union[str, Path]) -> None:
     """
-    Удаляет файл по указанному file_path.
+    Удаляет указанный файл.
 
     Аргументы:
-        file_path (str): Путь к файлу, который нужно удалить.
+        file_path : Union[str, Path]: Путь к файлу, который нужно удалить.
 
     Возвращает:
         None
@@ -26,38 +37,59 @@ def delete_file(file_path):
         )
 
 
-def get_audio_file(path_in: Path = variables.DIR_SOUND_IN) -> list[str]:
+def get_files(path_in: Path, extensions: list[str] = ["*.*"]) -> list[Path]:
     """
-    Получает список аудиофайлов из указанного пути.
+    Получает список файлов из указанного пути, c указанными расширениями.
 
     Аргументы:
         path_in (Path, опционально): Входной путь для поиска аудиофайлов.
-                        По умолчанию variables.DIR_SOUND_IN.
-
+        extensions (list, опционально): Расширения для поиска аудиофайлов.
     Возвращает:
-        list[str]: Список путей к аудиофайлам.
+        list[str]: Список путей к файлам.
     """
-    file_list = []
-    files = sorted(Path(path_in).rglob("*.wav"))
-    for file in list(map(str, files)):
-        file_txt = f"{file.split('.')[0]}.txt"
-        if Path(file_txt).is_file():
+    all_files: list[Path] = []
+    for ext in extensions:
+        all_files.extend(Path(path_in).rglob(ext))
+    return all_files
+
+
+def check_files_must_trascrib(all_files: list[Path]) -> list[Path]:
+    files_must_trascrib: list[Path] = []
+    # for file in list(map(str, files)):
+    for file in all_files:
+        # проверяем наличие текстового фала с транскрибированием
+        if file.with_suffix(".txt").is_file():
             logger_settings.logger.debug(f"Файл уже обработан.\n {file}")
+
+        # проверяем, что длительность аудиофайла меньше заданного лимита
+        elif file_duration_check(file) > variables.DURATION_LIMIT:
+            logger_settings.logger.debug(
+                f"Длительность аудиофайла {file} " f"превышает установленный лимит.\n"
+            )
+
+        # если не удалось получить длительность аудиофайла
+        elif file_duration_check(file) == 0:  # битый аудиофайл
+            logger_settings.logger.debug(
+                f"Не удалось получить длительность аудиофайла. {file}"
+            )
+
         else:
+            # формируем список аудиофайлов для обработки
+            files_must_trascrib.append(file)
             logger_settings.logger.debug(f"Файл для обработки\n {file}")
-            file_list.append(file)
-    return file_list
+
+    return files_must_trascrib
 
 
 def save_text_to_file(
     trans_eng_text: str, path_out: Path = variables.DIR_SOUND_OUT
-):
+) -> None:
     # Сохраняем вывод в текстовый файл
     with open(path_out, "w", encoding="utf-8") as output_file:
         output_file.write(trans_eng_text)
 
 
-def file_duration_check(file: str) -> float:
+def file_duration_check(file: Path) -> float:
     """
     Проверяет длительность данного файла и возвращает длительность в секундах.
     Если файл не может быть обработан, возвращает предел длительности,
@@ -76,7 +108,7 @@ def file_duration_check(file: str) -> float:
     except Exception:
         # Если файл не может быть обработан, возвращает предел длительности,
         #   определенный в модуле переменных.
-        return variables.DURATION_LIMIT
+        return 0
     else:
         # Пересчитываем длительность в минуты и секунды
         minutes_duartion = int(sound.duration_seconds // 60)

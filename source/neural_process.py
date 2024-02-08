@@ -26,6 +26,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     model = whisper.load_model(variables.MODEL)
 
     # Загрузка и предварительная обработка аудио
+    # /home/alex/V.-.F.-Whisper/sound/Арабский wav/сирийско-ливанский/_____G729_8___(ip_______10_8_0_10-______10_8_0_30)__000448.wav
     audio = whisper.load_audio(audios)
     audio = whisper.pad_or_trim(audio)
 
@@ -40,15 +41,15 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     # Транскрибируем аудио и переводим в английский при необходимости
     if lang == "en":
         if variables.MODEL == "large":
-            result = model.transcribe(audios, fp16=False, language=lang)
+            result_en = model.transcribe(str(audios), fp16=False, language=lang)
         else:
             model_en = whisper.load_model(f"{variables.MODEL}.en")
-            result = model_en.transcribe(audios, fp16=False, language=lang)
-        result_en = result
+            result_en = model_en.transcribe(str(audios), fp16=False, language=lang)
+        result = result_en
     else:
-        result = model.transcribe(audios, fp16=False, language=lang)
+        result = model.transcribe(str(audios), fp16=False, language=lang)
         result_en = model.transcribe(
-            audios, fp16=False, language=lang, task="translate"
+            str(audios), fp16=False, language=lang, task="translate"
         )
 
     # Возвращаем транскрибированный текст,
@@ -57,12 +58,26 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     return result, result_en, lang
 
 
-def final_process(file: Path):
+def final_process(file: Path) -> str:
     raw, raw_en, detected_lang = sound_to_text(file)
     translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
     translator2 = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ru")
-    text = f"Перевод аудиофайла: {file} \n"
+    text = f"Транскрибирование аудиофайла:\n {file}\n"
     text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
+    # Формирование текста транскрибирования (модели Whisper)
+    # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
+    if detected_lang != "en":
+        text += "-------------------- \n"
+        text += f"Исходный текст (Whisper): \n{raw['text']} \n"
+    text += "-------------------- \n"
+    text += f"Английский (Whisper): \n{raw_en['text']} \n"
+    text += "-------------------- \n"
+    translation2 = translator2(raw_en)
+    text += f"Русский (Whisper + Helsinki-NLP/opus-mt-en-ru): \n"
+    text += f"{translation2[0]['translation_text']} \n"
+
+    text += "\n-------------------- \n" * 2
+
     for segment in raw["segments"]:
         text += "-------------------- \n"
         text += f"ID элемента: {segment['id']} Начало: {int(segment['start'])} --- Конец: {int(segment['end'])} \n"
@@ -79,17 +94,8 @@ def final_process(file: Path):
             text_en = translation[0]["translation_text"]
             translation2 = translator2(text_en)
             text += f"Русский: {translation2[0]['translation_text']} \n"
-    text_Helsinki_NLP = text
 
-    text = f"Перевод аудиофайла: {file} \n"
-    text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
-    text += "-------------------- \n"
-    text += f"Исходный текст:{raw['text']} \n"
-    text += "-------------------- \n"
-    text += f"Английский (Whisper_NLP):{raw_en['text']} \n"
-    text_Whisper_NLP = text
-
-    return text_Helsinki_NLP, text_Whisper_NLP
+    return text
 
 
 def get_language_name(code: str) -> str:

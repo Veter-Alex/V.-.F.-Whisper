@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 
-def draw_picture(picture: str):
+def draw_picture(picture: str) -> None:
     # Открываем изображение
     img = Image.open(picture)
 
