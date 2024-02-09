@@ -86,7 +86,7 @@ def final_process(file: Path) -> str:
     text += "-------------------- \n"
     text += f"Английский (Whisper): \n{raw_en['text']} \n"
     text += "-------------------- \n"
-    translation2 = translator2(raw_en)
+    translation2 = translator2(raw_en['text'])
     text += f"Русский (Whisper + Helsinki-NLP/opus-mt-en-ru): \n"
     text += f"{translation2[0]['translation_text']} \n"
 
