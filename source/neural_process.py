@@ -26,7 +26,6 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     model = whisper.load_model(variables.MODEL)
 
     # Загрузка и предварительная обработка аудио
-    # /home/alex/V.-.F.-Whisper/sound/Арабский wav/сирийско-ливанский/_____G729_8___(ip_______10_8_0_10-______10_8_0_30)__000448.wav
     audio = whisper.load_audio(audios)
     audio = whisper.pad_or_trim(audio)
 
@@ -41,10 +40,14 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     # Транскрибируем аудио и переводим в английский при необходимости
     if lang == "en":
         if variables.MODEL == "large":
-            result_en = model.transcribe(str(audios), fp16=False, language=lang)
+            result_en = model.transcribe(
+                str(audios), fp16=False, language=lang
+            )
         else:
             model_en = whisper.load_model(f"{variables.MODEL}.en")
-            result_en = model_en.transcribe(str(audios), fp16=False, language=lang)
+            result_en = model_en.transcribe(
+                str(audios), fp16=False, language=lang
+            )
         result = result_en
     else:
         result = model.transcribe(str(audios), fp16=False, language=lang)
@@ -54,7 +57,6 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
 
     # Возвращаем транскрибированный текст,
     #   переведенный текст и обнаруженный язык
-    # return result["segments"], result_en["segments"], lang
     return result, result_en, lang
 
 
@@ -62,6 +64,7 @@ def final_process(file: Path) -> str:
     raw, raw_en, detected_lang = sound_to_text(file)
     translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
     translator2 = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ru")
+    text = ""
     text = f"Транскрибирование аудиофайла:\n {file}\n"
     text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
     # Формирование текста транскрибирования (модели Whisper)
@@ -106,7 +109,8 @@ def get_language_name(code: str) -> str:
     code (str): Код языка для поиска.
 
     Возвращает:
-    str: Название соответствующего языка или "неизвестный язык", если код не найден.
+    str: Название соответствующего языка
+            или "неизвестный язык", если код не найден.
     """
     languages = {
         "ru": "русский",
