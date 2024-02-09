@@ -65,7 +65,12 @@ def final_process(file: Path) -> str:
     """
     Транскрибирует аудиофайл, переводит его на английский, а затем на русский.
 
-    
+    Args:
+        file (Path): Путь к аудиофайлу.
+
+    Returns:
+        str: Текст, содержащий транскрибированный текст,
+            переводы и детали сегментов.
     """
     raw, raw_en, detected_lang = sound_to_text(file)
     translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")

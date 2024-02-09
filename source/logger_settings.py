@@ -18,7 +18,7 @@ if Path(dotenv_path).is_file():
     load_dotenv(dotenv_path)
 
 
-def configure_logger(level: str):
+def configure_logger(level: str) -> None:
     """
     Функция назначает уровень логирования и настраивает логгер.
     """
