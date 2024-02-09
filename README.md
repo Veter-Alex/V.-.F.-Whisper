@@ -38,7 +38,6 @@
 
   <p align="center">
     Программа для транскрибирования аудиофайлов и перевода на английский и русский языки.
-
     остальной текст можно не смотреть )))
     <br />
     <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
