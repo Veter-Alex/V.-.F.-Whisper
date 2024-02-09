@@ -20,11 +20,12 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     audios (Path): Путь к аудиофайлу.
 
     Returns:
-    tuple[str, str, str]: Транскрибированный текст, переведенный текст и обнаруженный язык.
+    tuple[str, str, str]: Транскрибированный текст,
+        переведенный на английский транскрибированный текст
+        и обнаруженный язык.
     """
     # Загружаем предобученную модель
     model = whisper.load_model(variables.MODEL)
-
     # Загрузка и предварительная обработка аудио
     audio = whisper.load_audio(audios)
     audio = whisper.pad_or_trim(audio)
@@ -35,7 +36,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
     # Определение языка
     _, probs = model.detect_language(mel)
     lang = max(probs, key=probs.get)
-    print(f"Detected language: {max(probs, key=probs.get)}")
+    print(f"Detected language: {lang}")
 
     # Транскрибируем аудио и переводим в английский при необходимости
     if lang == "en":
@@ -61,6 +62,11 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
 
 
 def final_process(file: Path) -> str:
+    """
+    Транскрибирует аудиофайл, переводит его на английский, а затем на русский.
+
+    
+    """
     raw, raw_en, detected_lang = sound_to_text(file)
     translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
     translator2 = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ru")
