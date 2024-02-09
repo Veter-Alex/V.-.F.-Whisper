@@ -31,13 +31,13 @@
 <br />
 <div align="center">
   <a>
-    <img src="images/logo.png" alt="Whisper - Logo.png" width="180" height="180">
+    <img src="images/logo.png" alt="trancrib - Logo.png" width="180" height="180">
   </a>
 
-  <h3 align="center">V.&.F.-Whisper</h3>
+  <h3 align="center">trancrib</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    Программа для транскрибирования аудиофайлов и перевода на английский и русский языки.
     <br />
     <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
     <br />
