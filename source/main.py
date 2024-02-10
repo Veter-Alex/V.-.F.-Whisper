@@ -34,7 +34,7 @@ def main() -> None:
             variables.DIR_SOUND_OUT, Path(file.stem).with_suffix(".txt")
         )
         file_process.save_text_to_file(trans_text, file_to_save)
-    # Все фай
+
     logger_settings.logger.info("Все аудиофайлы обработаны.")
 
 

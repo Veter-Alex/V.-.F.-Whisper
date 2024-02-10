@@ -13,10 +13,10 @@ import logger_settings
 from dotenv import load_dotenv
 
 os.system("clear")
-draw.draw_picture(f"{Path(__file__).parent.parent}/images/logo.jpg")
+draw.draw_picture(f"{Path(__file__).parent.parent}/images/logo.png")
 print("\n" * 2)
-logger_settings.logger.info("НАЧАЛО РАБОТЫ.".center(70))
-logger_settings.logger.info("Настройки из файла '.env' ):".center(70))
+logger_settings.logger.info("НАЧАЛО РАБОТЫ.".center(35))
+logger_settings.logger.info("(настройки из файла '.env' ):".center(35))
 dotenv_path = f"{Path((__file__)).parent.parent}/.env"
 if Path(dotenv_path).is_file():
     load_dotenv(dotenv_path)
@@ -36,7 +36,7 @@ if LOG_LEVEL not in [
 else:
     logger_settings.configure_logger(LOG_LEVEL)
     logger_settings.logger.info(f"Уровень логирования: {LOG_LEVEL}")
-
+    logger_settings.logger.info(f"Путь логфайла: {logger_settings.logger["sink"][1]}")
 # Переменные для работы приложения
 if getenv("DIR_SOUND_IN") is None:
     exit(
@@ -45,9 +45,10 @@ if getenv("DIR_SOUND_IN") is None:
     )
 else:
     DIR_SOUND_IN = getenv("DIR_SOUND_IN")
-    """ Входная директория с файлами, содержащими звуковые файлы """
+    """ Входная директория с файлами, содержащими звуковые файлы
+        и текстовый файл с результатами обработки """
     logger_settings.logger.info(
-        f"Входная директория со звуковыми файлами: {DIR_SOUND_IN}"
+        f"Входная директория: {DIR_SOUND_IN}"
     )
 
 # TODO реализовать проверки через регулярные выражения

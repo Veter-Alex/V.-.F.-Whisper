@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import datetime
 import torch
 import variables
 import whisper
@@ -72,6 +72,7 @@ def final_process(file: Path) -> str:
         str: Текст, содержащий транскрибированный текст,
             переводы и детали сегментов.
     """
+    time_start = time_start = datetime.datetime.now(datetime.timezone.utc)
     raw, raw_en, detected_lang = sound_to_text(file)
     translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
     translator2 = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ru")
@@ -86,11 +87,20 @@ def final_process(file: Path) -> str:
     text += "-------------------- \n"
     text += f"Английский (Whisper): \n{raw_en['text']} \n"
     text += "-------------------- \n"
-    translation2 = translator2(raw_en['text'])
-    text += f"Русский (Whisper + Helsinki-NLP/opus-mt-en-ru): \n"
+    time_end = datetime.datetime.now(datetime.timezone.utc)
+    time_transcrib_file = time_end - time_start
+    text += f"Whisper отработал {time_transcrib_file} \n"
+
+    text += "-------------------- \n"
+    translation2 = translator2(raw_en["text"])
+    text += f"Русский (Helsinki-NLP/opus-mt-en-ru): \n"
     text += f"{translation2[0]['translation_text']} \n"
 
-    text += "\n-------------------- \n" * 2
+    text += "\n"
+    text += "-------------------- \n" * 2
+    text += "Разбор по сегментам. \n"
+    text += "Исходный текст (Whisper). \n"
+    text += "Английский и русский (Helsinki-NLP) . \n"
 
     for segment in raw["segments"]:
         text += "-------------------- \n"
@@ -108,6 +118,11 @@ def final_process(file: Path) -> str:
             text_en = translation[0]["translation_text"]
             translation2 = translator2(text_en)
             text += f"Русский: {translation2[0]['translation_text']} \n"
+    time_end = datetime.datetime.now(datetime.timezone.utc)
+    time_transcrib_file = time_end - time_start
+    # Вычисление времени обработки и добавление в итоговый текст
+    idx_str = text.index("-----")
+    text = f"{text[:idx_str]}Время обработки: {time_transcrib_file}\n{text[idx_str:]}"
 
     return text
 
