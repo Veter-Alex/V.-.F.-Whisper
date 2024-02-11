@@ -11,7 +11,7 @@ torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 torch.set_num_threads(4)
 
 
-def sound_to_text(audios: Path) -> tuple[str, str, str]:
+def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
     """
     Транскрибирует аудио в текст
         и при необходимости переводит его на английский.
@@ -58,7 +58,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str]:
 
     # Возвращаем транскрибированный текст,
     #   переведенный текст и обнаруженный язык
-    return result, result_en, lang
+    return result, result_en, lang, model
 
 
 def final_process(file: Path) -> str:
@@ -73,12 +73,13 @@ def final_process(file: Path) -> str:
             переводы и детали сегментов.
     """
     time_start = time_start = datetime.datetime.now(datetime.timezone.utc)
-    raw, raw_en, detected_lang = sound_to_text(file)
+    raw, raw_en, detected_lang, model_whisper = sound_to_text(file)
     translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
     translator2 = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ru")
     text = ""
     text = f"Транскрибирование аудиофайла:\n {file}\n"
     text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
+    text += f"Транскрибирование выполнено с помощью модели 'Whisper.{variables.MODEL}' \n"
     # Формирование текста транскрибирования (модели Whisper)
     # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
     if detected_lang != "en":
@@ -92,10 +93,14 @@ def final_process(file: Path) -> str:
     text += f"Whisper отработал {time_transcrib_file} \n"
 
     text += "-------------------- \n"
-    translation2 = translator2(raw_en["text"])
+    text_en = raw_en["text"]
+    max_length=len(text_en) + 5
+    translation2 = translator2(text_en, max_length=max_length)
     text += f"Русский (Helsinki-NLP/opus-mt-en-ru): \n"
     text += f"{translation2[0]['translation_text']} \n"
 
+    # Разбор по сегментам текста транскрибирования (модели Whisper)
+    # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
     text += "\n"
     text += "-------------------- \n" * 2
     text += "Разбор по сегментам. \n"

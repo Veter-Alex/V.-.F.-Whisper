@@ -8,9 +8,11 @@ from os import getenv
 from pathlib import Path
 from sys import exit
 
+# from file_process import check_dir_sound_in_and_mount
 import draw
 import logger_settings
 from dotenv import load_dotenv
+
 
 os.system("clear")
 draw.draw_picture(f"{Path(__file__).parent.parent}/images/logo.png")
@@ -36,37 +38,27 @@ if LOG_LEVEL not in [
 else:
     logger_settings.configure_logger(LOG_LEVEL)
     logger_settings.logger.info(f"Уровень логирования: {LOG_LEVEL}")
-    logger_settings.logger.info(f"Путь логфайла: {logger_settings.logger["sink"][1]}")
+    # TODO вывести путь файла логирования
+    # logger_settings.logger.info(f"Путь логфайла: {logger_settings.log_path}")
+
 # Переменные для работы приложения
-if getenv("DIR_SOUND_IN") is None:
+if (
+    getenv("DIR_SOUND_IN") is None
+    or not Path(getenv("DIR_SOUND_IN")).is_dir()
+):
     exit(
-        "Входная директория с файлами, содержащими звуковые файлы НЕ ЗАДАНА.\n"
+        "Входная директория, содержащяя звуковые файлы"
+        " НЕ ЗАДАНА или НЕ ДОСТУПНА.\n"
         "Error: DIR_SOUND_IN is None"
     )
 else:
     DIR_SOUND_IN = getenv("DIR_SOUND_IN")
     """ Входная директория с файлами, содержащими звуковые файлы
         и текстовый файл с результатами обработки """
-    logger_settings.logger.info(
-        f"Входная директория: {DIR_SOUND_IN}"
-    )
+    logger_settings.logger.info(f"Входная директория: {DIR_SOUND_IN}")
 
 # TODO реализовать проверки через регулярные выражения
 EXTENSIONS = getenv("EXTENSIONS", "*.*").split(", ")
-
-if getenv("DIR_SOUND_OUT") is None:
-    exit(
-        "Выходная директория с файлами,"
-        " содержащими звуковые файлы и файлы транскрибирования НЕ ЗАДАНА.\n"
-        "Error: DIR_SOUND_OUT is None"
-    )
-else:
-    DIR_SOUND_OUT = getenv("DIR_SOUND_OUT")
-    """ Выходная директория с файлами,
-        содержащими звуковые файлы и файлы транскрибирования"""
-    logger_settings.logger.info(
-        f"Выходная директория со звуковыми файлами: {DIR_SOUND_OUT}"
-    )
 
 
 if getenv("DURATION_LIMIT") is None:
@@ -78,7 +70,8 @@ else:
     DURATION_LIMIT = float(getenv("DURATION_LIMIT", "600"))
     """ Максимальная длительность звукового файла в секундах """
     logger_settings.logger.info(
-        f"Максимальная длительность звукового файла в секундах: " f"{DURATION_LIMIT}"
+        f"Максимальная длительность звукового файла в секундах: "
+        f"{DURATION_LIMIT}"
     )
 
 if getenv("MODEL") not in [

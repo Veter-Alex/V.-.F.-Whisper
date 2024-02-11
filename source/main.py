@@ -31,7 +31,7 @@ def main() -> None:
 
         # сохраняем результат в текстовый файл
         file_to_save = Path(
-            variables.DIR_SOUND_OUT, Path(file.stem).with_suffix(".txt")
+            Path(file).with_suffix(".txt")
         )
         file_process.save_text_to_file(trans_text, file_to_save)
 

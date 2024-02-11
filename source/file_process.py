@@ -3,13 +3,12 @@
 Def:
     delete_file(file_path) -> None : Удаляет файл по указанному file_path.
 
-
 Returns:
     _type_: _description_
     """
 
 from pathlib import Path
-
+import os
 import logger_settings
 import variables
 from pydub import AudioSegment
@@ -55,7 +54,6 @@ def get_files(path_in: Path, extensions: list[str] = ["*.*"]) -> list[Path]:
 
 def check_files_must_trascrib(all_files: list[Path]) -> list[Path]:
     files_must_trascrib: list[Path] = []
-    # for file in list(map(str, files)):
     for file in all_files:
         # проверяем наличие текстового фала с транскрибированием
         if file.with_suffix(".txt").is_file():
@@ -64,7 +62,8 @@ def check_files_must_trascrib(all_files: list[Path]) -> list[Path]:
         # проверяем, что длительность аудиофайла меньше заданного лимита
         elif file_duration_check(file) > variables.DURATION_LIMIT:
             logger_settings.logger.debug(
-                f"Длительность аудиофайла {file} " f"превышает установленный лимит.\n"
+                f"Длительность аудиофайла {file} "
+                f"превышает установленный лимит.\n"
             )
 
         # если не удалось получить длительность аудиофайла
@@ -82,7 +81,7 @@ def check_files_must_trascrib(all_files: list[Path]) -> list[Path]:
 
 
 def save_text_to_file(
-    trans_eng_text: str, path_out: Path = variables.DIR_SOUND_OUT
+    trans_eng_text: str, path_out: Path = variables.DIR_SOUND_IN
 ) -> None:
     # Сохраняем вывод в текстовый файл
     with open(path_out, "w", encoding="utf-8") as output_file:

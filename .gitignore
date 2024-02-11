@@ -160,5 +160,6 @@ cython_debug/
 #.idea/
 
 # Временные файлы
-sound/
+temp_mnt/
 parser_notam/
+help/install.docx
