@@ -11,6 +11,21 @@ torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 torch.set_num_threads(4)
 
 
+def get_the_model_whisper(file : Path) -> str:
+    if "tiny (quality = low)" in str(file):
+        return "tiny"
+    elif "base (quality = 2)" in str(file):
+        return "base"
+    elif "small (quality = 3)" in str(file):
+        return "small"
+    elif "medium (quality = 4)" in str(file):
+        return "medium"
+    elif "large (quality = max)" in str(file):
+        return "large"
+    else:
+        return variables.MODEL
+
+
 def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
     """
     Транскрибирует аудио в текст
@@ -25,13 +40,15 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
         и обнаруженный язык.
     """
     # Загружаем предобученную модель
-    model = whisper.load_model(variables.MODEL)
+    model_whisper = get_the_model_whisper(audios)
+    model = whisper.load_model(model_whisper)
     # Загрузка и предварительная обработка аудио
     audio = whisper.load_audio(audios)
     audio = whisper.pad_or_trim(audio)
 
     # Преобразование аудио в логарифмический мел-спектрограмм
-    mel = whisper.log_mel_spectrogram(audio, n_mels=128).to(model.device)
+    n_mels = 128 if model_whisper == "large" else 80
+    mel = whisper.log_mel_spectrogram(audio, n_mels=n_mels).to(model.device)
 
     # Определение языка
     _, probs = model.detect_language(mel)
@@ -40,12 +57,12 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
 
     # Транскрибируем аудио и переводим в английский при необходимости
     if lang == "en":
-        if variables.MODEL == "large":
+        if model_whisper == "large":
             result_en = model.transcribe(
                 str(audios), fp16=False, language=lang
             )
         else:
-            model_en = whisper.load_model(f"{variables.MODEL}.en")
+            model_en = whisper.load_model(f"{model_whisper}.en")
             result_en = model_en.transcribe(
                 str(audios), fp16=False, language=lang
             )
@@ -58,7 +75,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
 
     # Возвращаем транскрибированный текст,
     #   переведенный текст и обнаруженный язык
-    return result, result_en, lang, model
+    return result, result_en, lang, model_whisper
 
 
 def final_process(file: Path) -> str:
@@ -79,7 +96,7 @@ def final_process(file: Path) -> str:
     text = ""
     text = f"Транскрибирование аудиофайла:\n {file}\n"
     text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
-    text += f"Транскрибирование выполнено с помощью модели 'Whisper.{variables.MODEL}' \n"
+    text += f"Транскрибирование выполнено с помощью модели 'Whisper.{model_whisper}' \n"
     # Формирование текста транскрибирования (модели Whisper)
     # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
     if detected_lang != "en":
@@ -95,6 +112,7 @@ def final_process(file: Path) -> str:
     text += "-------------------- \n"
     text_en = raw_en["text"]
     max_length = len(text_en) + 5
+    # TODO Разбить текст на блоки не болеее 512 символов
     translation2 = translator2(text_en, max_length=max_length)
     text += f"Русский (Helsinki-NLP/opus-mt-en-ru): \n"
     text += f"{translation2[0]['translation_text']} \n"

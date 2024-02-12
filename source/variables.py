@@ -3,12 +3,12 @@
     приложение на моменте запуска.
 """
 
+
+import re
 import os
 from os import getenv
 from pathlib import Path
 from sys import exit
-
-# from file_process import check_dir_sound_in_and_mount
 import draw
 import logger_settings
 from dotenv import load_dotenv
@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 
 os.system("clear")
 draw.draw_picture(f"{Path(__file__).parent.parent}/images/logo.png")
+print("\n")
 logger_settings.logger.info("НАЧАЛО РАБОТЫ.".center(35))
 logger_settings.logger.info("(настройки из файла '.env' ):".center(35))
 dotenv_path = f"{Path((__file__)).parent.parent}/.env"
@@ -37,14 +38,14 @@ if LOG_LEVEL not in [
 else:
     logger_settings.configure_logger(LOG_LEVEL)
     logger_settings.logger.info(f"Уровень логирования: {LOG_LEVEL}")
-    # TODO вывести путь файла логирования
-    # logger_settings.logger.info(f"Путь логфайла: {logger_settings.log_path}")
+    logger_settings.logger.info(
+        f"Путь к лог-файлу: "
+        f"{Path.joinpath(Path(__file__).parent.parent, 'logs', f'{Path(__file__).parent.parent.stem}.log')}\n"
+    )
 
-# Переменные для работы приложения
-if (
-    getenv("DIR_SOUND_IN") is None
-    or not Path(getenv("DIR_SOUND_IN")).is_dir()
-):
+# КОНСТАНТЫ ДЛЯ РАБОТЫ ПРИЛОЖЕНИЯ
+# Считывание и проверка входной директории с аудиофайлами
+if getenv("DIR_SOUND_IN") is None or not Path(getenv("DIR_SOUND_IN")).is_dir():
     exit(
         "Входная директория, содержащяя звуковые файлы"
         " НЕ ЗАДАНА или НЕ ДОСТУПНА.\n"
@@ -54,10 +55,26 @@ else:
     DIR_SOUND_IN = getenv("DIR_SOUND_IN")
     """ Входная директория с файлами, содержащими звуковые файлы
         и текстовый файл с результатами обработки """
-    logger_settings.logger.info(f"Входная директория: {DIR_SOUND_IN}")
+    logger_settings.logger.info(
+        f"Входная директория с аудиофайлами: {DIR_SOUND_IN}"
+    )
 
-# TODO реализовать проверки через регулярные выражения
-EXTENSIONS = getenv("EXTENSIONS", "*.*").split(", ")
+# Считывание и проверка списка расширений для поиска аудиофайлов.
+extensions = getenv("EXTENSIONS", "*.*").split(", ")
+REGEXP_EXT = re.compile(r"^\*?\.[a-zA-Z0-9]+$")
+for ext in extensions:
+    if not REGEXP_EXT.match(ext):
+        extensions.remove(ext)
+        logger_settings.logger.debug(f"Расширение {ext} не поддерживается.")
+if not extensions:
+    EXTENSIONS = ["*.wav"]
+    logger_settings.logger.warning(
+        "Расширения не заданы или заданы с некорректно. "
+        "Значение '*.wav' установлено по умолчанию"
+    )
+else:
+    EXTENSIONS = extensions
+logger_settings.logger.info(f"Расширения для поиска аудиофайлов: {EXTENSIONS}")
 
 
 if getenv("DURATION_LIMIT") is None:
@@ -69,8 +86,7 @@ else:
     DURATION_LIMIT = float(getenv("DURATION_LIMIT", "600"))
     """ Максимальная длительность звукового файла в секундах """
     logger_settings.logger.info(
-        f"Максимальная длительность звукового файла в секундах: "
-        f"{DURATION_LIMIT}"
+        f"Максимальная длительность звукового файла: " f"{DURATION_LIMIT} сек."
     )
 
 if getenv("MODEL") not in [
@@ -82,8 +98,11 @@ if getenv("MODEL") not in [
     "large-v2",
     "large-v3",
 ]:
-    exit("Модель не задана или задана некорректно.\n Error: MODEL is None")
+    MODEL = "small"
+    logger_settings.logger.warning(
+        "Модель whisper не задана или задана с некорректно. "
+        "Значение 'small' установлено по умолчанию"
+    )
 else:
     MODEL = getenv("MODEL")
-    """ Модель whisper """
-    logger_settings.logger.info(f"Модель whisper: {MODEL}")
+    logger_settings.logger.info(f"Модель whisper: {MODEL}\n")

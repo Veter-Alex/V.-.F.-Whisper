@@ -8,6 +8,7 @@ Returns:
     """
 
 from pathlib import Path
+import pathlib
 import os
 import logger_settings
 import variables
@@ -37,17 +38,29 @@ def delete_file(file_path: Union[str, Path]) -> None:
 
 
 def check_temp_folders_for_other_model(
-    temp_path: Paht = varibles.DIR_SOUND_IN,
+    temp_path: Path = variables.DIR_SOUND_IN,
 ) -> None:
-    temp_folders = [
-        Path.joinpath(Path(__file__).parent.parent, "tiny"),
-        Path.joinpath(Path(__file__).parent.parent, "base"),
-        Path.joinpath(Path(__file__).parent.parent, "small"),
-        Path.joinpath(Path(__file__).parent.parent, "medium"),
-        Path.joinpath(Path(__file__).parent.parent, "large"),
-    ]
-    for temp_folder in temp_folders:
-        pass
+    Path.joinpath(temp_path, "tiny (quality = low)").mkdir(parents=True, exist_ok=True)
+    Path.joinpath(temp_path, "base (quality = 2)").mkdir(parents=True, exist_ok=True)
+    Path.joinpath(temp_path, "small (quality = 3)").mkdir(parents=True, exist_ok=True)
+    Path.joinpath(temp_path, "medium (quality = 4)").mkdir(parents=True, exist_ok=True)
+    Path.joinpath(temp_path, "large (quality = max)").mkdir(parents=True, exist_ok=True)
+    Path.joinpath(temp_path, 'readme.txt')
+    with Path.joinpath(temp_path, 'readme.txt').open("w") as f:
+        f.write(
+            "Директории (tiny, base, small, medium, large) предназначены "
+            "для выбора модели обработки (качества обраьотки). "
+            "Более качественная модель лучше выполнит транскрибирование "
+            "и перевод, но затратит на это больше времени. "
+            "Для обработки с помощь конкретной модели нужно поместить "
+            "аудиофайлы в соответствующую директорию. Внутри директорий "
+            "можно создавать любую удобную структуру папок. "
+            "Файлы с транскрибированным и переведенным текстом будут помещены "
+            "в директорию с аудиофайлом.\n\n"
+            "Аудиофайлы в корне входной директории (можно создавать любую "
+            "удобную структуру папок) будут обработаны с помощью модели "
+            "по умолчанию, указанной в настройках программы."
+        )
 
 
 def get_files(path_in: Path, extensions: list[str] = ["*.*"]) -> list[Path]:
