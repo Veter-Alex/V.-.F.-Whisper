@@ -36,6 +36,20 @@ def delete_file(file_path: Union[str, Path]) -> None:
         )
 
 
+def check_temp_folders_for_other_model(
+    temp_path: Paht = varibles.DIR_SOUND_IN,
+) -> None:
+    temp_folders = [
+        Path.joinpath(Path(__file__).parent.parent, "tiny"),
+        Path.joinpath(Path(__file__).parent.parent, "base"),
+        Path.joinpath(Path(__file__).parent.parent, "small"),
+        Path.joinpath(Path(__file__).parent.parent, "medium"),
+        Path.joinpath(Path(__file__).parent.parent, "large"),
+    ]
+    for temp_folder in temp_folders:
+        pass
+
+
 def get_files(path_in: Path, extensions: list[str] = ["*.*"]) -> list[Path]:
     """
     Получает список файлов из указанного пути, c указанными расширениями.

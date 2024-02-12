@@ -16,7 +16,6 @@ from dotenv import load_dotenv
 
 os.system("clear")
 draw.draw_picture(f"{Path(__file__).parent.parent}/images/logo.png")
-print("\n" * 2)
 logger_settings.logger.info("НАЧАЛО РАБОТЫ.".center(35))
 logger_settings.logger.info("(настройки из файла '.env' ):".center(35))
 dotenv_path = f"{Path((__file__)).parent.parent}/.env"

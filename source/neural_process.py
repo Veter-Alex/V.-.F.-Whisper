@@ -31,7 +31,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
     audio = whisper.pad_or_trim(audio)
 
     # Преобразование аудио в логарифмический мел-спектрограмм
-    mel = whisper.log_mel_spectrogram(audio).to(model.device)
+    mel = whisper.log_mel_spectrogram(audio, n_mels=128).to(model.device)
 
     # Определение языка
     _, probs = model.detect_language(mel)
@@ -94,7 +94,7 @@ def final_process(file: Path) -> str:
 
     text += "-------------------- \n"
     text_en = raw_en["text"]
-    max_length=len(text_en) + 5
+    max_length = len(text_en) + 5
     translation2 = translator2(text_en, max_length=max_length)
     text += f"Русский (Helsinki-NLP/opus-mt-en-ru): \n"
     text += f"{translation2[0]['translation_text']} \n"

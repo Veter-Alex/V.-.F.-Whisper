@@ -12,6 +12,7 @@ if Path(dotenv_path).is_file():
 
 
 def main() -> None:
+    check_temp_folders_for_other_model(varibles.DIR_SOUND_IN)
     # Получаем список аудиофайлов из указанного пути.
     file_list = file_process.get_files(
         Path(variables.DIR_SOUND_IN), list(variables.EXTENSIONS)
