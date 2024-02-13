@@ -76,6 +76,7 @@ else:
     EXTENSIONS = extensions
 logger_settings.logger.info(f"Расширения для поиска аудиофайлов: {EXTENSIONS}")
 
+CHANGE_SAMPLING_RATE_TO_16KGH = getenv("CHANGE_SAMPLING_RATE_TO_16KGH")
 
 if getenv("DURATION_LIMIT") is None:
     exit(

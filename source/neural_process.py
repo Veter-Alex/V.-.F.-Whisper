@@ -4,26 +4,66 @@ import torch
 import variables
 import whisper
 from transformers import pipeline
+import librosa
+from typing import Dict, Optional, Union
 
+# Проверяем доступность CUDA и устанавливаем устройство соответственно
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
+# Устанавливаем тип данных torch в зависимости от доступности CUDA
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 # устанавливаем количество потоков для torch
 torch.set_num_threads(4)
 
 
-def get_the_model_whisper(file : Path) -> str:
-    if "tiny (quality = low)" in str(file):
-        return "tiny"
-    elif "base (quality = 2)" in str(file):
-        return "base"
-    elif "small (quality = 3)" in str(file):
-        return "small"
-    elif "medium (quality = 4)" in str(file):
-        return "medium"
-    elif "large (quality = max)" in str(file):
-        return "large"
-    else:
-        return variables.MODEL
+def change_sampling_rate(audio_file: Path) -> Path:
+    """
+    Функция для изменения частоты дискретизации аудиофайла
+    на целевую и сохраняет результирующий файл.
+
+    Parameters:
+        audio_file (Path): Путь к входному аудиофайлу.
+
+    Returns:
+        Path: Путь к перепробованному аудиофайлу.
+    """
+    # Загрузка аудиофайла
+    data, sr = librosa.load(audio_file)
+    # Изменение частоты дискретизации
+    target_sr = 16000  # Целевая частота дискретизации
+    resampled_data = librosa.resample(data, orig_sr=sr, target_sr=target_sr)
+    # Сохранение результата
+    p = Path(audio_file)
+    resampled_file = Path.joinpath(p.parent, f"{p.stem}-resampled{p.suffix}")
+    librosa.output.write_wav(resampled_file, resampled_data, target_sr)
+    return Path(resampled_file)
+
+
+def get_the_model_whisper(file: Union[Path, str]) -> str:
+    """Получить тип модели для Whisper
+        в соответствии с директорией расположения файла.
+
+    Args:
+        file (Union[Path, str]): Путь к файлу.
+
+    Returns:
+        str: Тип модели.
+    """
+
+    # Сопоставление ключевых слов файла с типами моделей
+    QUALITY_MAPPING: Dict[str, str] = {
+        "tiny (quality = low)": "tiny",
+        "base (quality = 2)": "base",
+        "small (quality = 3)": "small",
+        "medium (quality = 4)": "medium",
+        "large (quality = max)": "large",
+    }
+    # Преобразовать файл в строку, если он является объектом Path
+    file_str = str(file) if isinstance(file, Path) else file
+    # Вернуть тип модели на основе директории файла
+    return next(
+        (value for key, value in QUALITY_MAPPING.items() if key in file_str),
+        variables.MODEL,
+    )
 
 
 def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
@@ -57,24 +97,21 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
 
     # Транскрибируем аудио и переводим в английский при необходимости
     if lang == "en":
-        if model_whisper == "large":
-            result_en = model.transcribe(
-                str(audios), fp16=False, language=lang
-            )
-        else:
-            model_en = whisper.load_model(f"{model_whisper}.en")
-            result_en = model_en.transcribe(
-                str(audios), fp16=False, language=lang
-            )
-        result = result_en
+        model_en = (
+            whisper.load_model(f"{model_whisper}.en")
+            if model_whisper == "large"
+            else model
+        )
+        result_en = model_en.transcribe(str(audios), fp16=False, language=lang)
+        result = ""
     else:
         result = model.transcribe(str(audios), fp16=False, language=lang)
         result_en = model.transcribe(
             str(audios), fp16=False, language=lang, task="translate"
         )
 
-    # Возвращаем транскрибированный текст,
-    #   переведенный текст и обнаруженный язык
+    # Возвращаем транскрибированный текст, переведенный текст,
+    # определенный язык и модель whisper
     return result, result_en, lang, model_whisper
 
 
@@ -87,13 +124,22 @@ def final_process(file: Path) -> str:
 
     Returns:
         str: Текст, содержащий транскрибированный текст,
-            переводы и детали сегментов.
+            переводы и детали сегментов.#### `change_sampling_rate(audio_file: Path) -> Path`
     """
     time_start = time_start = datetime.datetime.now(datetime.timezone.utc)
+    # TODO вставить процедуру изменения частоты дискретизации (def change_sampling_rate(audio_file : Path) -> Path:)
+    # if variables.CHANGE_SAMPLING_RATE_TO_16KGH:
+    #     file = change_sampling_rate(file)
+    # Транскрибирование аудио в текст, перевод его на английский,
+    # определение языка и модели для обработки.
     raw, raw_en, detected_lang, model_whisper = sound_to_text(file)
-    translator = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
-    translator2 = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ru")
+    # Переводчик pipeline с английского языка на русский
+    translator_en_ru = pipeline(
+        "translation", model="Helsinki-NLP/opus-mt-en-ru"
+    )
+    # Формирование текста
     text = ""
+    text_ru = ""  # текст на русском
     text = f"Транскрибирование аудиофайла:\n {file}\n"
     text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
     text += f"Транскрибирование выполнено с помощью модели 'Whisper.{model_whisper}' \n"
@@ -105,42 +151,40 @@ def final_process(file: Path) -> str:
     text += "-------------------- \n"
     text += f"Английский (Whisper): \n{raw_en['text']} \n"
     text += "-------------------- \n"
-    time_end = datetime.datetime.now(datetime.timezone.utc)
-    time_transcrib_file = time_end - time_start
-    text += f"Whisper отработал {time_transcrib_file} \n"
-
-    text += "-------------------- \n"
-    text_en = raw_en["text"]
-    max_length = len(text_en) + 5
-    # TODO Разбить текст на блоки не болеее 512 символов
-    translation2 = translator2(text_en, max_length=max_length)
     text += f"Русский (Helsinki-NLP/opus-mt-en-ru): \n"
-    text += f"{translation2[0]['translation_text']} \n"
+    for segment in raw_en["segments"]:
+        # Перевод текста с английского на русский
+        translation_en_ru = translator_en_ru(segment["text"])
+        text_ru += translation_en_ru[0]["translation_text"]
+    text += f"{text_ru} \n"
 
     # Разбор по сегментам текста транскрибирования (модели Whisper)
     # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
-    text += "\n"
-    text += "-------------------- \n" * 2
+    text += "\n" * 2
+    text += "-------------------- \n"
     text += "Разбор по сегментам. \n"
-    text += "Исходный текст (Whisper). \n"
-    text += "Английский и русский (Helsinki-NLP) . \n"
-
-    for segment in raw["segments"]:
+    text += "Исходный текст и английский (модель Whisper).\n"
+    text += "русский текст (модель Helsinki-NLP) .\n"
+    text += "-------------------- \n"
+    if raw == "":
+        raw = raw_en
+    for i, segment in enumerate(raw["segments"]):
         text += "-------------------- \n"
         text += f"ID элемента: {segment['id']} Начало: {int(segment['start'])} --- Конец: {int(segment['end'])} \n"
         text += f"Исходный текст:{segment['text']} \n"
         if detected_lang == "en":
-            text_en = segment["text"]
-            translation2 = translator2(text_en)
-            text += f"Русский: {translation2[0]['translation_text']} \n"
+            translation_en_ru = translator_en_ru(segment["text"])
+            text += f"Русский: {translation_en_ru[0]['translation_text']} \n"
         elif detected_lang == "ru":
             text += ""
         else:
-            translation = translator(segment["text"])
-            text += f"Английский: {translation[0]['translation_text']} \n"
-            text_en = translation[0]["translation_text"]
-            translation2 = translator2(text_en)
-            text += f"Русский: {translation2[0]['translation_text']} \n"
+            text += f"Английский: {raw_en['segments'][i]['text']} \n"
+            # int(str(i).zfill(2))
+            translation_en_ru = translator_en_ru(
+                raw_en["segments"][i]["text"]
+            )
+            text += f"Русский: {translation_en_ru[0]['translation_text']} \n"
+
     time_end = datetime.datetime.now(datetime.timezone.utc)
     time_transcrib_file = time_end - time_start
     # Вычисление времени обработки и добавление в итоговый текст

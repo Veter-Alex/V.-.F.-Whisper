@@ -8,8 +8,6 @@ Returns:
     """
 
 from pathlib import Path
-import pathlib
-import os
 import logger_settings
 import variables
 from pydub import AudioSegment
@@ -40,13 +38,23 @@ def delete_file(file_path: Union[str, Path]) -> None:
 def check_temp_folders_for_other_model(
     temp_path: Path = variables.DIR_SOUND_IN,
 ) -> None:
-    Path.joinpath(temp_path, "tiny (quality = low)").mkdir(parents=True, exist_ok=True)
-    Path.joinpath(temp_path, "base (quality = 2)").mkdir(parents=True, exist_ok=True)
-    Path.joinpath(temp_path, "small (quality = 3)").mkdir(parents=True, exist_ok=True)
-    Path.joinpath(temp_path, "medium (quality = 4)").mkdir(parents=True, exist_ok=True)
-    Path.joinpath(temp_path, "large (quality = max)").mkdir(parents=True, exist_ok=True)
-    Path.joinpath(temp_path, 'readme.txt')
-    with Path.joinpath(temp_path, 'readme.txt').open("w") as f:
+    Path.joinpath(temp_path, "tiny (quality = low)").mkdir(
+        parents=True, exist_ok=True
+    )
+    Path.joinpath(temp_path, "base (quality = 2)").mkdir(
+        parents=True, exist_ok=True
+    )
+    Path.joinpath(temp_path, "small (quality = 3)").mkdir(
+        parents=True, exist_ok=True
+    )
+    Path.joinpath(temp_path, "medium (quality = 4)").mkdir(
+        parents=True, exist_ok=True
+    )
+    Path.joinpath(temp_path, "large (quality = max)").mkdir(
+        parents=True, exist_ok=True
+    )
+    Path.joinpath(temp_path, "readme.txt")
+    with Path.joinpath(temp_path, "readme.txt").open("w") as f:
         f.write(
             "Директории (tiny, base, small, medium, large) предназначены "
             "для выбора модели обработки (качества обраьотки). "
