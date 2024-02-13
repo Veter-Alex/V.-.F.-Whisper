@@ -5,6 +5,7 @@ import variables
 import whisper
 from transformers import pipeline
 import librosa
+import soundfile
 from typing import Dict, Optional, Union
 
 # Проверяем доступность CUDA и устанавливаем устройство соответственно
@@ -34,7 +35,7 @@ def change_sampling_rate(audio_file: Path) -> Path:
     # Сохранение результата
     p = Path(audio_file)
     resampled_file = Path.joinpath(p.parent, f"{p.stem}-resampled{p.suffix}")
-    librosa.output.write_wav(resampled_file, resampled_data, target_sr)
+    soundfile.write(resampled_file, resampled_data, target_sr)
     return Path(resampled_file)
 
 
@@ -128,8 +129,8 @@ def final_process(file: Path) -> str:
     """
     time_start = time_start = datetime.datetime.now(datetime.timezone.utc)
     # TODO вставить процедуру изменения частоты дискретизации (def change_sampling_rate(audio_file : Path) -> Path:)
-    # if variables.CHANGE_SAMPLING_RATE_TO_16KGH:
-    #     file = change_sampling_rate(file)
+    if variables.CHANGE_SAMPLING_RATE_TO_16KGH:
+        file = change_sampling_rate(file)
     # Транскрибирование аудио в текст, перевод его на английский,
     # определение языка и модели для обработки.
     raw, raw_en, detected_lang, model_whisper = sound_to_text(file)

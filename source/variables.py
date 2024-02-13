@@ -3,7 +3,6 @@
     приложение на моменте запуска.
 """
 
-
 import re
 import os
 from os import getenv
@@ -76,7 +75,9 @@ else:
     EXTENSIONS = extensions
 logger_settings.logger.info(f"Расширения для поиска аудиофайлов: {EXTENSIONS}")
 
-CHANGE_SAMPLING_RATE_TO_16KGH = getenv("CHANGE_SAMPLING_RATE_TO_16KGH")
+CHANGE_SAMPLING_RATE_TO_16KGH = getenv(
+    "CHANGE_SAMPLING_RATE_TO_16KGH", "False"
+).lower() in ("true", "1")
 
 if getenv("DURATION_LIMIT") is None:
     exit(
