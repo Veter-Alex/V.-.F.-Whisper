@@ -11,7 +11,7 @@ from pathlib import Path
 import logger_settings
 import variables
 from pydub import AudioSegment
-from typing import Optional, Union
+from typing import Union
 
 
 def delete_file(file_path: Union[str, Path]) -> None:

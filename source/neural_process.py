@@ -6,7 +6,8 @@ import whisper
 from transformers import pipeline
 import librosa
 import soundfile
-from typing import Dict, Optional, Union
+from typing import Dict, Union
+import logger_settings
 
 # Проверяем доступность CUDA и устанавливаем устройство соответственно
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -100,7 +101,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
     if lang == "en":
         model_en = (
             whisper.load_model(f"{model_whisper}.en")
-            if model_whisper == "large"
+            if model_whisper != "large"
             else model
         )
         result_en = model_en.transcribe(str(audios), fp16=False, language=lang)
@@ -125,15 +126,15 @@ def final_process(file: Path) -> str:
 
     Returns:
         str: Текст, содержащий транскрибированный текст,
-            переводы и детали сегментов.#### `change_sampling_rate(audio_file: Path) -> Path`
+            переводы и детали сегментов.
     """
     time_start = time_start = datetime.datetime.now(datetime.timezone.utc)
-    # TODO вставить процедуру изменения частоты дискретизации (def change_sampling_rate(audio_file : Path) -> Path:)
     if variables.CHANGE_SAMPLING_RATE_TO_16KGH:
         file = change_sampling_rate(file)
     # Транскрибирование аудио в текст, перевод его на английский,
     # определение языка и модели для обработки.
     raw, raw_en, detected_lang, model_whisper = sound_to_text(file)
+    logger_settings.logger.info(f"Используется модель: {model_whisper}")
     # Переводчик pipeline с английского языка на русский
     translator_en_ru = pipeline(
         "translation", model="Helsinki-NLP/opus-mt-en-ru"
@@ -162,29 +163,27 @@ def final_process(file: Path) -> str:
     # Разбор по сегментам текста транскрибирования (модели Whisper)
     # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
     text += "\n" * 2
-    text += "-------------------- \n"
     text += "Разбор по сегментам. \n"
-    text += "Исходный текст и английский (модель Whisper).\n"
-    text += "русский текст (модель Helsinki-NLP) .\n"
+    text += "-------------------- \n" * 2
+    if detected_lang != "en":
+        text += "Исходный текст (модель Whisper).\n"
+        text += "-------------------- \n"
+        for segment in raw["segments"]:
+            text += "-------------------- \n"
+            text += f"ID элемента: {segment['id']} Начало: {int(segment['start'])} --- Конец: {int(segment['end'])} \n"
+            text += f"Исходный текст:{segment['text']} \n"
+
+    text += "-------------------- \n" * 2
+    text += (
+        "Английский (модель Whisper) и русский текст (модель Helsinki-NLP).\n"
+    )
     text += "-------------------- \n"
-    if raw == "":
-        raw = raw_en
-    for i, segment in enumerate(raw["segments"]):
+    for segment in raw_en["segments"]:
         text += "-------------------- \n"
         text += f"ID элемента: {segment['id']} Начало: {int(segment['start'])} --- Конец: {int(segment['end'])} \n"
-        text += f"Исходный текст:{segment['text']} \n"
-        if detected_lang == "en":
-            translation_en_ru = translator_en_ru(segment["text"])
-            text += f"Русский: {translation_en_ru[0]['translation_text']} \n"
-        elif detected_lang == "ru":
-            text += ""
-        else:
-            text += f"Английский: {raw_en['segments'][i]['text']} \n"
-            # int(str(i).zfill(2))
-            translation_en_ru = translator_en_ru(
-                raw_en["segments"][i]["text"]
-            )
-            text += f"Русский: {translation_en_ru[0]['translation_text']} \n"
+        text += f"Английский текст:{segment['text']} \n"
+        translation_en_ru = translator_en_ru(segment["text"])
+        text += f"Русский: {translation_en_ru[0]['translation_text']} \n"
 
     time_end = datetime.datetime.now(datetime.timezone.utc)
     time_transcrib_file = time_end - time_start

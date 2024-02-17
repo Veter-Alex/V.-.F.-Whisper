@@ -13,7 +13,7 @@ if Path(dotenv_path).is_file():
 
 def main() -> None:
     working = True
-    """Тригер выхода из цикла"""
+    """Триггер выхода из цикла"""
     cycle = 0
     """ Счетчик циклов выполнения программы"""
     while working:
@@ -47,7 +47,7 @@ def main() -> None:
                 file_process.save_text_to_file(trans_text, file_to_save)
 
         cycle += 1
-        logger_settings.logger.debug(f"Закончен цыкл {cycle}")
+        logger_settings.logger.debug(f"Закончен цикл {cycle}")
         logger_settings.logger.info(
             "Все аудиофайлы в текущем цикле программы обработаны.\n"
         )
