@@ -1,13 +1,15 @@
-import pytest
 from pathlib import Path
+from typing import Any, Generator
 from unittest.mock import patch
-from file_process import delete_file
+
+import pytest
+from source.file_process import delete_file
 
 
 # Assuming logger_settings.logger is a Loguru logger instance
 # Mocking logger to avoid actual logging during tests
 @pytest.fixture
-def mock_logger(mocker):
+def mock_logger(mocker: Any) -> Generator[Any, None, None]:
     with patch("logger_settings.logger") as mock_logger:
         yield mock_logger
 

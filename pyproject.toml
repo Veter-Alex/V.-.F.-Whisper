@@ -1,10 +1,9 @@
 [tool.poetry]
-name = "v-f-whisper"
+name = "transcrib"
 version = "0.1.0"
 description = ""
 authors = ["VeterAN <ver-an@yandex.ru>"]
 readme = "README.md"
-packages = [{include = "v"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -19,6 +18,7 @@ sentencepiece = "^0.1.99"
 sacremoses = "^0.1.1"
 librosa = "^0.10.1"
 soundfile = "^0.12.1"
+pytest = "^8.0.1"
 
 [build-system]
 requires = ["poetry-core"]
