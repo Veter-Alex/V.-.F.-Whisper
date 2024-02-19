@@ -11,7 +11,9 @@
         "аудиофайлом",
         "аудиофайлу",
         "аудиофайлы",
-        "dotenv"
+        "dotenv",
+        "librosa",
+        "soundfile"
     ],
     "python.analysis.autoImportCompletions": true,
     "python.analysis.typeCheckingMode": "basic"
