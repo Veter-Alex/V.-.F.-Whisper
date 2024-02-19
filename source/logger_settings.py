@@ -1,11 +1,10 @@
 """
-Модуль настраивает логирование в библиотеке loguru
+Модуль настраивает логирование библиотеки loguru
 
 Def:
-    configure_logger: Функция назначает уровень логирования сообщения
-                        и настраивает логгер.
-
+    configure_logger: Настраивает логгер с указанным уровнем логирования.
 """
+
 import pathlib
 import sys
 from pathlib import Path
@@ -16,11 +15,19 @@ from loguru import logger
 dotenv_path = f"{Path((__file__)).parent.parent}/.env"
 if Path(dotenv_path).is_file():
     load_dotenv(dotenv_path)
+else:
+    exit(f"Файл {dotenv_path} не существует.")
 
 
 def configure_logger(level: str) -> None:
     """
-    Функция назначает уровень логирования и настраивает логгер.
+    Настраивает логгер с указанным уровнем логирования.
+
+    Args:
+        level: Уровень логирования, который будет установлен.
+
+    Returns:
+        None
     """
     # Директория лог файлов
     log_path = pathlib.Path.joinpath(

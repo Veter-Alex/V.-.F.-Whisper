@@ -1,13 +1,29 @@
-from pathlib import Path
+"""
+Модуль содержит функции операций нейросетей.
+
+Def:
+    change_sampling_rate(audio_file) -> Path: Изменяет частоту дискретизации.
+    get_the_model_whisper() -> Dict: Возвращает тип модели для Whisper
+                в соответствии с директорией расположения файла.
+    sound_to_text(file: Path) -> Union[str, None]: Транскрибирует аудио в текст
+                и переводит его на английский.
+    final_process(file: Path) -> str: Транскрибирует аудиофайл,
+                переводит его на английский, а затем на русский.
+    get_language_name(code: str) -> str: Возвращает название языка,
+                соответствующего указанному коду.
+"""
+
 import datetime
+from pathlib import Path
+from typing import Any, Dict, Tuple, Union
+
+import librosa
+import logger_settings
+import soundfile
 import torch
 import variables
 import whisper
 from transformers import pipeline
-import librosa
-import soundfile
-from typing import Dict, Union
-import logger_settings
 
 # Проверяем доступность CUDA и устанавливаем устройство соответственно
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -41,7 +57,8 @@ def change_sampling_rate(audio_file: Path) -> Path:
 
 
 def get_the_model_whisper(file: Union[Path, str]) -> str:
-    """Получить тип модели для Whisper
+    """
+    Получить тип модели для Whisper
         в соответствии с директорией расположения файла.
 
     Args:
@@ -68,10 +85,10 @@ def get_the_model_whisper(file: Union[Path, str]) -> str:
     )
 
 
-def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
+def sound_to_text(audios: Path) -> Tuple[Any, Any, Any, str]:
     """
     Транскрибирует аудио в текст
-        и при необходимости переводит его на английский.
+        и переводит его на английский.
 
     Args:
     audios (Path): Путь к аудиофайлу.
@@ -85,7 +102,7 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
     model_whisper = get_the_model_whisper(audios)
     model = whisper.load_model(model_whisper)
     # Загрузка и предварительная обработка аудио
-    audio = whisper.load_audio(audios)
+    audio = whisper.load_audio(str(audios))
     audio = whisper.pad_or_trim(audio)
 
     # Преобразование аудио в логарифмический мел-спектрограмм
@@ -95,7 +112,6 @@ def sound_to_text(audios: Path) -> tuple[str, str, str, str]:
     # Определение языка
     _, probs = model.detect_language(mel)
     lang = max(probs, key=probs.get)
-    print(f"Detected language: {lang}")
 
     # Транскрибируем аудио и переводим в английский при необходимости
     if lang == "en":
@@ -135,6 +151,7 @@ def final_process(file: Path) -> str:
     # определение языка и модели для обработки.
     raw, raw_en, detected_lang, model_whisper = sound_to_text(file)
     logger_settings.logger.info(f"Используется модель: {model_whisper}")
+    logger_settings.logger.info(f"Язык аудиозаписи: {detected_lang}")
     # Переводчик pipeline с английского языка на русский
     translator_en_ru = pipeline(
         "translation", model="Helsinki-NLP/opus-mt-en-ru"
@@ -144,7 +161,10 @@ def final_process(file: Path) -> str:
     text_ru = ""  # текст на русском
     text = f"Транскрибирование аудиофайла:\n {file}\n"
     text += f"В файле используется {get_language_name(detected_lang)} язык. \n"
-    text += f"Транскрибирование выполнено с помощью модели 'Whisper.{model_whisper}' \n"
+    text += (
+        f"Транскрибирование выполнено с помощью "
+        f"модели 'Whisper.{model_whisper}' \n"
+    )
     # Формирование текста транскрибирования (модели Whisper)
     # и перевода (модели Helsinki-NLP/opus-mt-en-ru)
     if detected_lang != "en":
@@ -157,7 +177,7 @@ def final_process(file: Path) -> str:
     for segment in raw_en["segments"]:
         # Перевод текста с английского на русский
         translation_en_ru = translator_en_ru(segment["text"])
-        text_ru += translation_en_ru[0]["translation_text"]
+        text_ru += translation_en_ru[0]["translation_text"]  # type: ignore
     text += f"{text_ru} \n"
 
     # Разбор по сегментам текста транскрибирования (модели Whisper)
@@ -170,7 +190,11 @@ def final_process(file: Path) -> str:
         text += "-------------------- \n"
         for segment in raw["segments"]:
             text += "-------------------- \n"
-            text += f"ID элемента: {segment['id']} Начало: {int(segment['start'])} --- Конец: {int(segment['end'])} \n"
+            text += (
+                f"ID элемента: {segment['id']} "
+                f"Начало: {int(segment['start'])} --- "
+                f"Конец: {int(segment['end'])} \n"
+            )
             text += f"Исходный текст:{segment['text']} \n"
 
     text += "-------------------- \n" * 2
@@ -180,16 +204,24 @@ def final_process(file: Path) -> str:
     text += "-------------------- \n"
     for segment in raw_en["segments"]:
         text += "-------------------- \n"
-        text += f"ID элемента: {segment['id']} Начало: {int(segment['start'])} --- Конец: {int(segment['end'])} \n"
+        text += (
+            f"ID элемента: {segment['id']} "
+            f"Начало: {int(segment['start'])} --- "
+            f"Конец: {int(segment['end'])} \n"
+        )
         text += f"Английский текст:{segment['text']} \n"
         translation_en_ru = translator_en_ru(segment["text"])
-        text += f"Русский: {translation_en_ru[0]['translation_text']} \n"
+        text += f"Русский: {translation_en_ru[0]['translation_text']} \n"  # type: ignore
 
     time_end = datetime.datetime.now(datetime.timezone.utc)
     time_transcrib_file = time_end - time_start
     # Вычисление времени обработки и добавление в итоговый текст
     idx_str = text.index("-----")
-    text = f"{text[:idx_str]}Время обработки: {time_transcrib_file}\n{text[idx_str:]}"
+    text = (
+        f"{text[:idx_str]}"
+        f"Время обработки: {time_transcrib_file}\n"
+        f"{text[idx_str:]}"
+    )
 
     return text
 

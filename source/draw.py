@@ -1,11 +1,22 @@
 from pathlib import Path
+from typing import Union
 
 from PIL import Image
 
 
-def draw_picture(picture: str) -> None:
+def draw_picture(picture: Union[str, Path]) -> None:
+    """
+    Функция, которая открывает изображение, масштабирует его до нового размера,
+            преобразует его в ASCII-арт и выводит результат.
+
+    Args:
+    picture: строка, представляющая путь к файлу изображения.
+
+    Returns:
+        None
+    """
     # Открываем изображение
-    img = Image.open(picture)
+    img = Image.open(Path(picture))
 
     # Масштабируем изображение до нужного размера
     width, height = img.size

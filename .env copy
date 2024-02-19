@@ -1,0 +1,19 @@
+# ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+
+# Для работы с ситемой логирования
+# ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
+LOG_LEVEL = "INFO"
+
+# Входная директория с аудиофайлами
+DIR_SOUND_IN = /home/alex/project/transcrib/temp_mnt
+# Расширения аудиофайлов для обработки
+EXTENSIONS = *.mp3, *.mp4, *.ogg, *.wav, *.webm
+# Лимит продолжительности аудио файла в секундах
+DURATION_LIMIT = 6000
+# Ключ на изменение частоты дискретизации аудиофайла
+CHANGE_SAMPLING_RATE_TO_16KGH = True
+
+# Настройки модуля whisper
+# Используемая модель
+# ("tiny", "base", "small", "medium", "large")
+MODEL = base

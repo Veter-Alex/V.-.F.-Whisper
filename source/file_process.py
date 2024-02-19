@@ -1,27 +1,36 @@
-"""Модуль содержит функции файловых операций.
+"""
+Модуль содержит функции файловых операций.
 
 Def:
     delete_file(file_path) -> None : Удаляет файл по указанному file_path.
-
-Returns:
-    _type_: _description_
-    """
+    check_temp_folders_for_other_model(temp_path) -> None : Создает директории
+                    для выбора модели обработки.
+    get_files(path, extensions) -> list: Возвращает список аудиофайлов
+                    в указанной директории с указанными расширениями.
+    check_file_must_trascrib(file_list) -> list: Возвращает список аудиофайлов,
+                    подлежащих обработке.
+    save_text_to_file(text, file_path) -> None: Сохраняет текст
+                    в указанный файл.
+    file_duration(file_path) -> float: Возвращает длительность аудиофайла
+                    в секундах.
+"""
 
 from pathlib import Path
+from typing import Union
+
 import logger_settings
 import variables
 from pydub import AudioSegment
-from typing import Union
 
 
 def delete_file(file_path: Union[str, Path]) -> None:
     """
     Удаляет указанный файл.
 
-    Аргументы:
+    Args:
         file_path : Union[str, Path]: Путь к файлу, который нужно удалить.
 
-    Возвращает:
+    Returns:
         None
     """
     try:
@@ -35,9 +44,17 @@ def delete_file(file_path: Union[str, Path]) -> None:
         )
 
 
-def check_temp_folders_for_other_model(
-    temp_path: Path = variables.DIR_SOUND_IN,
-) -> None:
+def check_temp_folders_for_other_model(temp_path: Union[str, Path]) -> None:
+    """
+    Создает директории для выбора модели обработки.
+
+    Args:
+        temp_path: Путь к временной папке.
+
+    Returns:
+        None
+    """
+    temp_path = Path(temp_path)
     Path.joinpath(temp_path, "tiny (quality = low)").mkdir(
         parents=True, exist_ok=True
     )
@@ -57,14 +74,15 @@ def check_temp_folders_for_other_model(
     with Path.joinpath(temp_path, "readme.txt").open("w") as f:
         f.write(
             "Директории (tiny, base, small, medium, large) предназначены "
-            "для выбора модели обработки (качества обраьотки). "
+            "для выбора модели обработки (качества обработки). "
             "Более качественная модель лучше выполнит транскрибирование "
             "и перевод, но затратит на это больше времени. "
             "Для обработки с помощь конкретной модели нужно поместить "
-            "аудиофайлы в соответствующую директорию. Внутри директорий "
+            "аудиофайлы (*.mp3, *.mp4, *.ogg, *.wav, *.webm) "
+            "в соответствующую директорию. Внутри директорий "
             "можно создавать любую удобную структуру папок. "
             "Файлы с транскрибированным и переведенным текстом будут помещены "
-            "в директорию с аудиофайлом.\n\n"
+            "в директорию с аудиофайлом с тем же именем и расширением txt.\n\n"
             "Аудиофайлы в корне входной директории (можно создавать любую "
             "удобную структуру папок) будут обработаны с помощью модели "
             "по умолчанию, указанной в настройках программы."
@@ -87,37 +105,61 @@ def get_files(path_in: Path, extensions: list[str] = ["*.*"]) -> list[Path]:
     return all_files
 
 
-def check_files_must_trascrib(all_files: list[Path]) -> list[Path]:
-    files_must_trascrib: list[Path] = []
-    for file in all_files:
-        # проверяем наличие текстового фала с транскрибированием
-        if file.with_suffix(".txt").is_file():
-            logger_settings.logger.debug(f"Файл уже обработан.\n {file}")
+def check_file_must_trascrib(file: Union[str, Path]) -> bool:
+    """
+    Функция для проверки файла, подлежащего обработке.
 
-        # проверяем, что длительность аудиофайла меньше заданного лимита
-        elif file_duration_check(file) > variables.DURATION_LIMIT:
-            logger_settings.logger.debug(
-                f"Длительность аудиофайла {file} "
-                f"превышает установленный лимит.\n"
-            )
+    Args:
+        file: Union[str, Path]:  Объект Path,
+                    представляющий файлы для проверки.
 
-        # если не удалось получить длительность аудиофайла
-        elif file_duration_check(file) == 0:  # битый аудиофайл
-            logger_settings.logger.debug(
-                f"Не удалось получить длительность аудиофайла. {file}"
-            )
-
-        else:
-            # формируем список аудиофайлов для обработки
-            files_must_trascrib.append(file)
-            logger_settings.logger.debug(f"Файл для обработки\n {file}")
-
-    return files_must_trascrib
+    Returns:
+        bool: Возвращает True, если файл прошел проверку
+    """
+    file = Path(file)
+    # проверка наличия аудиофайла
+    if not file.is_file():
+        logger_settings.logger.debug(f"Файл не найден. {file}")
+        return False
+    # проверяем наличие текстового фала с транскрибированием
+    elif file.with_suffix(".txt").is_file():
+        logger_settings.logger.debug(f"Файл уже обработан.\n {file}")
+        return False
+    # проверяем, что длительность аудиофайла меньше заданного лимита
+    duration = file_duration_check(file)
+    if duration > variables.DURATION_LIMIT:
+        logger_settings.logger.debug(
+            f"Длительность аудиофайла {file} "
+            f"превышает установленный лимит.\n"
+        )
+        return False
+    # если не удалось получить длительность аудиофайла
+    elif duration == 0:  # битый аудиофайл
+        logger_settings.logger.debug(
+            f"Не удалось получить длительность аудиофайла. {file}"
+        )
+        return False
+    else:
+        # файл для обработки
+        logger_settings.logger.debug(f"Файл для обработки\n {file}")
+        return True
 
 
 def save_text_to_file(
     trans_eng_text: str, path_out: Path = variables.DIR_SOUND_IN
 ) -> None:
+    """
+    Сохраняет переведенный английский текст в текстовый файл.
+
+    Args:
+        trans_eng_text (str): Переведенный английский текст,
+                    который нужно сохранить.
+        path_out (Path, optional): Путь к выходному каталогу.
+
+    Returns:
+        None
+    """
+
     # Сохраняем вывод в текстовый файл
     with open(path_out, "w", encoding="utf-8") as output_file:
         output_file.write(trans_eng_text)
@@ -138,7 +180,7 @@ def file_duration_check(file: Path) -> float:
     try:
         sound = AudioSegment.from_file(file)
         # перевод длительности в секунды
-        sound.duration_seconds == (len(sound) / 1000.0)
+        sound.duration_seconds = len(sound) / 1000.0
     except Exception:
         # Если файл не может быть обработан, возвращает предел длительности,
         #   определенный в модуле переменных.
