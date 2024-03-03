@@ -1027,6 +1027,23 @@ files = [
 ]
 
 [[package]]
+name = "pyee"
+version = "11.1.0"
+description = "A rough port of Node.js's EventEmitter to Python with a few tricks of its own"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyee-11.1.0-py3-none-any.whl", hash = "sha256:5d346a7d0f861a4b2e6c47960295bd895f816725b27d656181947346be98d7c1"},
+    {file = "pyee-11.1.0.tar.gz", hash = "sha256:b53af98f6990c810edd9b56b87791021a8f54fd13db4edd1142438d44ba2263f"},
+]
+
+[package.dependencies]
+typing-extensions = "*"
+
+[package.extras]
+dev = ["black", "build", "flake8", "flake8-black", "isort", "jupyter-console", "mkdocs", "mkdocs-include-markdown-plugin", "mkdocstrings[python]", "pytest", "pytest-asyncio", "pytest-trio", "sphinx", "toml", "tox", "trio", "trio", "trio-typing", "twine", "twisted", "validate-pyproject[all]"]
+
+[[package]]
 name = "python-dotenv"
 version = "1.0.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
@@ -1039,6 +1056,21 @@ files = [
 
 [package.extras]
 cli = ["click (>=5.0)"]
+
+[[package]]
+name = "python-ffmpeg"
+version = "2.0.10"
+description = "A python binding for FFmpeg which provides sync and async APIs"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python-ffmpeg-2.0.10.tar.gz", hash = "sha256:5c7c47f52e9990aabb4f530ef4debb5373bbc8041dd1e3a8452cc1c69ea615f4"},
+    {file = "python_ffmpeg-2.0.10-py3-none-any.whl", hash = "sha256:775642bdc6063431e9ee8c208826b731cbb2c8c39fc2967f8bebdce90bade216"},
+]
+
+[package.dependencies]
+pyee = "*"
+typing-extensions = "*"
 
 [[package]]
 name = "pyyaml"
@@ -1997,4 +2029,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "764d5f2beeef18090f7f33deb14b419ddd561f302e64ffeb5ca0b3444fb056d5"
+content-hash = "1b48d1bf3047007dd8940d7b78d7579e59a25716a79a60696a0a1a729c8a5ae1"
