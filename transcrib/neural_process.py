@@ -16,10 +16,9 @@ Def:
 import datetime
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
-
-import librosa
+import file_process
+import ffmpeg
 import logger_settings
-import soundfile
 import torch
 import variables
 import whisper
@@ -45,15 +44,21 @@ def change_sampling_rate(audio_file: Path) -> Path:
         Path: Путь к перепробованному аудиофайлу.
     """
     # Загрузка аудиофайла
-    data, sr = librosa.load(audio_file)
-    # Изменение частоты дискретизации
-    target_sr = 16000  # Целевая частота дискретизации
-    resampled_data = librosa.resample(data, orig_sr=sr, target_sr=target_sr)
-    # Сохранение результата
-    p = Path(audio_file)
-    resampled_file = Path.joinpath(p.parent, f"{p.stem}-resampled{p.suffix}")
-    soundfile.write(resampled_file, resampled_data, target_sr)
-    return Path(resampled_file)
+    stream = ffmpeg.input(audio_file)
+    audio = stream.audio
+    output_file = Path.joinpath(
+        audio_file.parent, f"16KHz_{audio_file.stem}{audio_file.suffix}"
+    )
+    # stream = ffmpeg.output(
+    #     audio, str(output_file), **{"ar": "16000", "acodec": "flac"}
+    # )
+    stream = ffmpeg.output(
+        audio, str(output_file), **{"ac": "1", "ar": "16000"}
+    )
+    ffmpeg.run(stream, capture_stdout=True, capture_stderr=True)
+    audio_file.unlink()
+    output_file.rename(audio_file)
+    return audio_file
 
 
 def get_the_model_whisper(file: Union[Path, str]) -> str:
@@ -144,11 +149,22 @@ def final_process(file: Path) -> str:
         str: Текст, содержащий транскрибированный текст,
             переводы и детали сегментов.
     """
-    time_start = time_start = datetime.datetime.now(datetime.timezone.utc)
-    if variables.CHANGE_SAMPLING_RATE_TO_16KGH:
-        file = change_sampling_rate(file)
+    time_start = datetime.datetime.now(datetime.timezone.utc)
+    # сохраняем временный файл процесса обработки
+    file_to_save = Path(Path(file).with_suffix(".proc"))
+    if file_to_save.is_file():
+        return "during the transcription process ... "
+    else:
+        file_process.save_text_to_file(
+            f"during the transcription process ...\n"
+            f"time start {time_start.strftime('%H:%M:%S (UTC) - %d %b %Y')}",
+            file_to_save,
+        )
+
     # Транскрибирование аудио в текст, перевод его на английский,
     # определение языка и модели для обработки.
+    if variables.CHANGE_SAMPLING_RATE_TO_16KGH:
+        file = change_sampling_rate(file)
     raw, raw_en, detected_lang, model_whisper = sound_to_text(file)
     logger_settings.logger.info(f"Используется модель: {model_whisper}")
     logger_settings.logger.info(f"Язык аудиозаписи: {detected_lang}")
@@ -222,7 +238,8 @@ def final_process(file: Path) -> str:
         f"Время обработки: {time_transcrib_file}\n"
         f"{text[idx_str:]}"
     )
-
+    if Path(Path(file).with_suffix(".proc")).is_file():
+        Path(Path(file).with_suffix(".proc")).unlink()
     return text
 
 

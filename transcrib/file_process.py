@@ -125,6 +125,10 @@ def check_file_must_trascrib(file: Union[str, Path]) -> bool:
     elif file.with_suffix(".txt").is_file():
         logger_settings.logger.debug(f"Файл уже обработан.\n {file}")
         return False
+    # проверяем наличие текстового фала с транскрибированием
+    elif file.with_suffix(".proc").is_file():
+        logger_settings.logger.debug(f"Файл в процессе обработки.\n {file}")
+        return False
     # проверяем, что длительность аудиофайла меньше заданного лимита
     duration = file_duration_check(file)
     if duration > variables.DURATION_LIMIT:
@@ -180,7 +184,7 @@ def file_duration_check(file: Path) -> float:
     try:
         sound = AudioSegment.from_file(file)
         # перевод длительности в секунды
-        sound.duration_seconds = len(sound) / 1000.0
+        # sound.duration_seconds = len(sound) / 1000.0
     except Exception:
         # Если файл не может быть обработан, возвращает предел длительности,
         #   определенный в модуле переменных.

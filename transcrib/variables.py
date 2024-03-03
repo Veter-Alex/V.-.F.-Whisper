@@ -13,7 +13,7 @@ import draw
 import logger_settings
 from dotenv import load_dotenv
 
-os.system("clear")
+# os.system("clear")
 path_image = Path(f"{Path(__file__).parent.parent}/images/logo.png")
 if path_image.exists():
     draw.draw_picture(path_image)

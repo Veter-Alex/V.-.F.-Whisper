@@ -25,14 +25,20 @@ def main() -> None:
         for file in file_list:
             if file_process.check_file_must_trascrib(file):
                 # Транскрибируем аудиофайл
+                print("\n")
                 logger_settings.logger.info(
                     f"Транскрибирование аудиофайла\n {file}"
                 )
                 trans_text = neural_process.final_process(file)
-
-                # сохраняем результат в текстовый файл
-                file_to_save = Path(Path(file).with_suffix(".txt"))
-                file_process.save_text_to_file(trans_text, file_to_save)
+                if trans_text == "during the transcription process ... ":
+                    logger_settings.logger.warning(
+                        f"Файл:\n {file}\n в процессе обработки или необходимо"
+                        f" удалить временный файл (имя файла).proc.\n"
+                    )
+                else:
+                    # сохраняем результат в текстовый файл
+                    file_to_save = Path(Path(file).with_suffix(".txt"))
+                    file_process.save_text_to_file(trans_text, file_to_save)
 
         logger_settings.logger.info(
             "Все аудиофайлы в текущем цикле программы обработаны.\n"
