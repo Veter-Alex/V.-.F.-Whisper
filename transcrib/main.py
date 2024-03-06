@@ -4,6 +4,7 @@ from pathlib import Path
 import file_process
 import logger_settings
 import neural_process
+import riffer2_wine
 import variables
 from dotenv import load_dotenv
 
@@ -14,6 +15,8 @@ if Path(dotenv_path).is_file():
 
 def main() -> None:
     while True:
+        # riffer2_wine.convert_other_type_audiofiles(variables.DIR_SOUND_IN)
+
         file_process.check_temp_folders_for_other_model(variables.DIR_SOUND_IN)
         # Получаем список аудиофайлов из указанного пути.
         file_list = file_process.get_files(

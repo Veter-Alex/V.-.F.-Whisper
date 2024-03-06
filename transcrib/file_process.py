@@ -15,12 +15,19 @@ Def:
                     в секундах.
 """
 
+import re
+import subprocess
+
+# from multiprocessing import process
 from pathlib import Path
+
+# from sys import stderr, stdout
 from typing import Union
 
 import ffmpeg
 import logger_settings
 import variables
+from sympy import Float
 
 # from pydub import AudioSegment
 
@@ -184,27 +191,22 @@ def file_duration_check(file: Path) -> float:
         float: Длительность файла в секундах.
     """
     try:
-        probe = ffmpeg.probe(file)
-        # Возвращаем длительность в секундах.
-        return float(probe["format"]["duration"])
-    except ffmpeg.Error:
+        process = subprocess.Popen(
+            ["ffmpeg", "-i", file],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        stdout, stderr = process.communicate()
+        matches = re.search(
+            r"Duration:\s{1}(?P<hours>\d+?):(?P<minutes>\d+?):(?P<seconds>\d+\.\d+?),",
+            stdout.decode(),
+            re.DOTALL,
+        ).groupdict()
+        dur = int(matches["minutes"]) * 60 + float(matches["seconds"])
+        return dur
+        # probe = ffmpeg.probe(file)
+        # # Возвращаем длительность в секундах.
+        # return float(probe["format"]["duration"])
+    except BaseException:
         # Если файл не может быть обработан, возвращает 0
         return 0
-    # try:
-    #     sound = AudioSegment.from_file(file)
-    #     # перевод длительности в секунды
-    #     # sound.duration_seconds = len(sound) / 1000.0
-    # except Exception:
-    #     # Если файл не может быть обработан, возвращает предел длительности,
-    #     #   определенный в модуле переменных.
-    #     return 0
-    # else:
-    #     # Пересчитываем длительность в минуты и секунды
-    #     minutes_duartion = int(sound.duration_seconds // 60)
-    #     seconds_duration = round((sound.duration_seconds % 60), 1)
-    #     logger_settings.logger.debug(
-    #         f"Длительность файла\n {file}\n"
-    #         f"{minutes_duartion} мин. {seconds_duration} сек."
-    #     )
-    #     # Возвращаем длительность в секундах.
-    #     return sound.duration_seconds
